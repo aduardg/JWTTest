@@ -18,5 +18,18 @@ namespace TestJwt.Services
                 return userDB;
             }
         }
+
+        public static User? getUserForRefreshToken(string refresh_token)
+        {
+            using (DbEF db = new DbEF())
+            {
+                var userDB = db.Users.Include(r =>
+                /*(u.Login == Login) && (u.Password ==Password)*/
+                r.roles
+                ).FirstOrDefault(u => u.Refresh_Token == refresh_token);
+
+                return userDB;
+            }
+        }
     }
 }
