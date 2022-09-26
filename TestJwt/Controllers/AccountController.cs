@@ -23,7 +23,7 @@ namespace TestJwt.Controllers
 
         [HttpPost]
         [Route("token")]
-        public IActionResult Token(string username, string password)
+        public IActionResult Token([FromForm]string username, [FromForm]string password)
         {
             var identity = GetIdentityFirst(username, password);
             if (identity == null)
@@ -71,21 +71,34 @@ namespace TestJwt.Controllers
 
         [HttpPost]
         [Route("refreshToken")]
-        public IActionResult refreshToken([FromForm] string refresh_token)
+        public IActionResult refreshToken([FromForm] string refreshToken)
         {
-            var identity = GetIdentityForRefrashToken(refresh_token);
+            var identity = GetIdentityForRefrashToken(refreshToken);
             if (identity == null)
             {
-                return BadRequest(new { errorText = "Invalid username or password." });
+                return BadRequest(new { errorText = "Invalid refreshToken or TimeOut" });
             }
-            if()
+
+            var jwt = TokenService.getJwtToken(identity);
+            var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+            var refresh_token = TokenService.ChangeRefreshToken(refreshToken);
+
+            var response = new
+            {
+                access_token = encodedJwt,
+                username = identity.Name,
+                refresh_token = refresh_token
+            };
+
+            return Json(response);
 
         }
 
         private ClaimsIdentity GetIdentityForRefrashToken(string refresh_token)
         {
             User? user = UserService.getUserForRefreshToken(refresh_token);
-            if (user != null)
+            if (user != null && user.Created_RefreshToken is not null && user.Created_RefreshToken >= DateTime.Now)
             {
                 var claims = new List<Claim>
                 {
